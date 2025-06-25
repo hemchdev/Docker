@@ -1,0 +1,20 @@
+server:
+  port: 8000
+  servlet:
+    session:
+      tracking-modes: cookie
+
+keycloak:
+  client-id: food-ordering-client
+  client-secret: Nxp3BLHRR77JibbCzxNC2S1VjcO7Kfn4
+  token-uri: http://keycloak:8080/realms/food-ordering-realm/protocol/openid-connect/token
+
+  users-uri: http://keycloak:8080/admin/realms/food-ordering-realm/users
+  admin-token-uri: http://keycloak:8080/realms/food-ordering-realm/protocol/openid-connect/token
+  admin-cli-client-id: admin-cli
+  admin-cli-client-secret: OsN4IxuMpg1Ar6zVfzpTclPuoYFEX8qq
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.bansikah.keycloakdemo: DEBUG

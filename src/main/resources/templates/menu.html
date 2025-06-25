@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodieFiesta Menu</title>
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary-color: #d9534f;
+            --secondary-color: #f0ad4e;
+            --background-color: #f9f9f9;
+            --text-color: #333;
+            --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            --card-hover-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        /* --- Navigation --- */
+        .navbar {
+            background-color: #fff !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color) !important;
+        }
+        .cart-icon-wrapper {
+            position: relative;
+            cursor: pointer;
+        }
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            font-size: 0.75rem;
+            line-height: 1;
+            padding: 0.25em 0.5em;
+        }
+
+        /* --- Filtering and Search --- */
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+        .filter-btn {
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid #eee;
+            background-color: #fff;
+        }
+        .filter-btn.active, .filter-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        .search-bar {
+            border-radius: 50px;
+            border: 2px solid #eee;
+        }
+        .search-bar:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(217, 83, 79, 0.25);
+        }
+
+        /* --- Menu Item Card --- */
+        .menu-item-card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+        }
+        .menu-item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--card-hover-shadow);
+        }
+        .menu-item-card .card-img-top {
+            height: 180px;
+            object-fit: cover;
+        }
+        .menu-item-card .card-body {
+            padding: 1rem;
+        }
+        .card-title {
+            font-weight: 600;
+        }
+        .card-price {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .btn-add-cart {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            border-radius: 50px;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-add-cart:hover {
+            background-color: #c9302c;
+        }
+        .btn-add-cart.added {
+            background-color: #28a745;
+        }
+
+        /* --- Offcanvas Cart --- */
+        .offcanvas-header {
+            border-bottom: 1px solid #eee;
+        }
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+        .cart-item-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+        .cart-item-details {
+            flex-grow: 1;
+        }
+        .quantity-controls button {
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            line-height: 1;
+            padding: 0;
+        }
+        .empty-cart-message {
+            text-align: center;
+            padding: 4rem 0;
+            color: #aaa;
+        }
+
+        /* --- Footer --- */
+        .footer {
+            background-color: #343a40;
+            color: white;
+            padding: 3rem 0;
+            margin-top: 5rem;
+        }
+        .footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .footer a:hover {
+            color: #f0ad4e;
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+        <a class="navbar-brand fs-4" th:href="@{/}">
+            <i class="bi bi-egg-fried"></i> FoodieFiesta
+        </a>
+        <div class="ms-auto d-flex align-items-center">
+                <span class="navbar-text me-3 d-none d-md-inline">
+                    Hello, <strong th:text="${username}">User</strong>!
+                </span>
+            <div id="cartIcon" class="cart-icon-wrapper fs-4 me-3" data-bs-toggle="offcanvas" data-bs-target="#shoppingCart" aria-controls="shoppingCart">
+                <i class="bi bi-cart"></i>
+                <span id="cartBadge" class="badge rounded-pill bg-danger cart-badge" style="display: none;">0</span>
+            </div>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn btn-outline-secondary btn-sm rounded-pill">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="container py-4">
+    <h1 class="fw-bold mb-4">Today's Menu</h1>
+
+    <!-- Search and Filters -->
+    <div class="d-lg-flex justify-content-between align-items-center mb-4">
+        <div class="filter-controls mb-3 mb-lg-0">
+            <button class="btn filter-btn active" data-filter="all">All</button>
+            <button class="btn filter-btn" data-filter="pizza">Pizza</button>
+            <button class="btn filter-btn" data-filter="burgers">Burgers</button>
+            <button class="btn filter-btn" data-filter="salads">Salads</button>
+            <button class="btn filter-btn" data-filter="appetizers">Appetizers</button>
+            <button class="btn filter-btn" data-filter="desserts">Desserts</button>
+            <button class="btn filter-btn" data-filter="drinks">Drinks</button>
+        </div>
+        <div class="flex-grow-1 flex-lg-grow-0" style="max-width: 300px;">
+            <input type="text" id="searchInput" class="form-control search-bar" placeholder="Search for a dish...">
+        </div>
+    </div>
+
+    <!-- Menu Grid -->
+    <div id="menuGrid" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <!-- Items will be dynamically populated here by the template -->
+
+        <!-- Pizzas -->
+        <div class="col menu-item" data-category="pizza"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Pizza" onerror="this.onerror=null;this.src='https://placehold.co/400x400/d9534f/FFFFFF?text=Pizza';"><div class="card-body d-flex flex-column"><h5 class="card-title">Spicy Pepperoni</h5><p class="card-text text-muted small flex-grow-1">A fiery classic with generous pepperoni slices.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$12.50</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Spicy Pepperoni', 12.50, 'https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="pizza"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Pizza" onerror="this.onerror=null;this.src='https://placehold.co/400x400/d9534f/FFFFFF?text=Pizza';"><div class="card-body d-flex flex-column"><h5 class="card-title">Veggie Supreme</h5><p class="card-text text-muted small flex-grow-1">A garden delight with peppers, onions, and olives.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$11.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Veggie Supreme', 11.00, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="pizza"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Pizza" onerror="this.onerror=null;this.src='https://placehold.co/400x400/d9534f/FFFFFF?text=Pizza';"><div class="card-body d-flex flex-column"><h5 class="card-title">BBQ Chicken</h5><p class="card-text text-muted small flex-grow-1">Grilled chicken, red onions, and a tangy BBQ sauce base.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$13.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'BBQ Chicken', 13.00, 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="pizza"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1528137871618-6ca57c9e0881?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Pizza" onerror="this.onerror=null;this.src='https://placehold.co/400x400/d9534f/FFFFFF?text=Pizza';"><div class="card-body d-flex flex-column"><h5 class="card-title">Margherita</h5><p class="card-text text-muted small flex-grow-1">Classic Italian with fresh mozzarella, tomatoes, and basil.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$10.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Margherita', 10.00, 'https://images.unsplash.com/photo-1528137871618-6ca57c9e0881?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+
+        <!-- Burgers -->
+        <div class="col menu-item" data-category="burgers"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1571091718767-18b5b1457add?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Burger" onerror="this.onerror=null;this.src='https://placehold.co/400x400/8B4513/FFFFFF?text=Burger';"><div class="card-body d-flex flex-column"><h5 class="card-title">Bacon Burger</h5><p class="card-text text-muted small flex-grow-1">Double beef, crispy bacon, and smoky BBQ sauce.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$14.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Bacon Burger', 14.00, 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="burgers"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Burger" onerror="this.onerror=null;this.src='https://placehold.co/400x400/8B4513/FFFFFF?text=Burger';"><div class="card-body d-flex flex-column"><h5 class="card-title">Classic Cheese</h5><p class="card-text text-muted small flex-grow-1">A simple yet perfect classic with a juicy patty and cheddar.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$10.50</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Classic Cheese', 10.50, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="burgers"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1603771554343-0a72c1b11b5e?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Burger" onerror="this.onerror=null;this.src='https://placehold.co/400x400/8B4513/FFFFFF?text=Burger';"><div class="card-body d-flex flex-column"><h5 class="card-title">Spicy Chicken</h5><p class="card-text text-muted small flex-grow-1">Crispy chicken breast with a spicy mayo and pickles.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$11.50</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Spicy Chicken', 11.50, 'https://images.unsplash.com/photo-1603771554343-0a72c1b11b5e?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+
+        <!-- Salads -->
+        <div class="col menu-item" data-category="salads"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Salad" onerror="this.onerror=null;this.src='https://placehold.co/400x400/28a745/FFFFFF?text=Salad';"><div class="card-body d-flex flex-column"><h5 class="card-title">Avocado Salad</h5><p class="card-text text-muted small flex-grow-1">Quinoa, avocado, and seasonal greens.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$9.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Avocado Salad', 9.00, 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="salads"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Salad" onerror="this.onerror=null;this.src='https://placehold.co/400x400/28a745/FFFFFF?text=Salad';"><div class="card-body d-flex flex-column"><h5 class="card-title">Caesar Salad</h5><p class="card-text text-muted small flex-grow-1">Romaine lettuce with croutons and classic Caesar dressing.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$8.50</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Caesar Salad', 8.50, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="salads"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Salad" onerror="this.onerror=null;this.src='https://placehold.co/400x400/28a745/FFFFFF?text=Salad';"><div class="card-body d-flex flex-column"><h5 class="card-title">Greek Salad</h5><p class="card-text text-muted small flex-grow-1">Feta, olives, and a zesty lemon-herb vinaigrette.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$9.50</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Greek Salad', 9.50, 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+
+        <!-- Appetizers -->
+        <div class="col menu-item" data-category="appetizers"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1598515214211-89d3c7373058?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Appetizer" onerror="this.onerror=null;this.src='https://placehold.co/400x400/f0ad4e/FFFFFF?text=Appetizer';"><div class="card-body d-flex flex-column"><h5 class="card-title">Garlic Bread</h5><p class="card-text text-muted small flex-grow-1">Toasted baguette with a rich garlic butter spread.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$5.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Garlic Bread', 5.00, 'https://images.unsplash.com/photo-1598515214211-89d3c7373058?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="appetizers"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1625938144952-416733611352?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Appetizer" onerror="this.onerror=null;this.src='https://placehold.co/400x400/f0ad4e/FFFFFF?text=Appetizer';"><div class="card-body d-flex flex-column"><h5 class="card-title">Mozzarella Sticks</h5><p class="card-text text-muted small flex-grow-1">Golden fried mozzarella served with marinara sauce.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$7.50</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Mozzarella Sticks', 7.50, 'https://images.unsplash.com/photo-1625938144952-416733611352?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="appetizers"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1541592106381-b58e7c136bab?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Appetizer" onerror="this.onerror=null;this.src='https://placehold.co/400x400/f0ad4e/FFFFFF?text=Appetizer';"><div class="card-body d-flex flex-column"><h5 class="card-title">Chicken Wings</h5><p class="card-text text-muted small flex-grow-1">Crispy wings tossed in your choice of BBQ or hot sauce.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$9.50</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Chicken Wings', 9.50, 'https://images.unsplash.com/photo-1541592106381-b58e7c136bab?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+
+        <!-- Desserts -->
+        <div class="col menu-item" data-category="desserts"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Dessert" onerror="this.onerror=null;this.src='https://placehold.co/400x400/6f42c1/FFFFFF?text=Dessert';"><div class="card-body d-flex flex-column"><h5 class="card-title">Cheesecake</h5><p class="card-text text-muted small flex-grow-1">Creamy New York style cheesecake with a berry coulis.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$6.50</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Cheesecake', 6.50, 'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="desserts"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1551024601-bec78d8d590d?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Dessert" onerror="this.onerror=null;this.src='https://placehold.co/400x400/6f42c1/FFFFFF?text=Dessert';"><div class="card-body d-flex flex-column"><h5 class="card-title">Chocolate Lava Cake</h5><p class="card-text text-muted small flex-grow-1">Warm chocolate cake with a gooey molten center.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$7.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Chocolate Lava Cake', 7.00, 'https://images.unsplash.com/photo-1551024601-bec78d8d590d?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="desserts"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1560180299-e152f5c75453?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Dessert" onerror="this.onerror=null;this.src='https://placehold.co/400x400/6f42c1/FFFFFF?text=Dessert';"><div class="card-body d-flex flex-column"><h5 class="card-title">Apple Pie</h5><p class="card-text text-muted small flex-grow-1">A slice of classic apple pie, just like grandma made.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$5.50</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Apple Pie', 5.50, 'https://images.unsplash.com/photo-1560180299-e152f5c75453?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+
+        <!-- Drinks -->
+        <div class="col menu-item" data-category="drinks"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1579954115545-a95591f28bfc?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Drink" onerror="this.onerror=null;this.src='https://placehold.co/400x400/17a2b8/FFFFFF?text=Drink';"><div class="card-body d-flex flex-column"><h5 class="card-title">Cola</h5><p class="card-text text-muted small flex-grow-1">Classic, refreshing cola served ice-cold.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$2.50</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Cola', 2.50, 'https://images.unsplash.com/photo-1579954115545-a95591f28bfc?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="drinks"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1551030173-1929ba651475?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Drink" onerror="this.onerror=null;this.src='https://placehold.co/400x400/17a2b8/FFFFFF?text=Drink';"><div class="card-body d-flex flex-column"><h5 class="card-title">Lemonade</h5><p class="card-text text-muted small flex-grow-1">Freshly squeezed lemonade, a perfect summer drink.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$3.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Lemonade', 3.00, 'https://images.unsplash.com/photo-1551030173-1929ba651475?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="drinks"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1600096194534-95cf5ece1467?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Drink" onerror="this.onerror=null;this.src='https://placehold.co/400x400/17a2b8/FFFFFF?text=Drink';"><div class="card-body d-flex flex-column"><h5 class="card-title">Iced Tea</h5><p class="card-text text-muted small flex-grow-1">House-brewed iced tea, lightly sweetened.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$2.75</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Iced Tea', 2.75, 'https://images.unsplash.com/photo-1600096194534-95cf5ece1467?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+
+        <!-- More items to reach 30 -->
+        <div class="col menu-item" data-category="pizza"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1590947132387-155cc02f3212?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Pizza" onerror="this.onerror=null;this.src='https://placehold.co/400x400/d9534f/FFFFFF?text=Pizza';"><div class="card-body d-flex flex-column"><h5 class="card-title">Hawaiian</h5><p class="card-text text-muted small flex-grow-1">A divisive classic with ham and pineapple.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$12.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Hawaiian', 12.00, 'https://images.unsplash.com/photo-1590947132387-155cc02f3212?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="burgers"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1605789538316-432243634845?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Burger" onerror="this.onerror=null;this.src='https://placehold.co/400x400/8B4513/FFFFFF?text=Burger';"><div class="card-body d-flex flex-column"><h5 class="card-title">Mushroom Swiss</h5><p class="card-text text-muted small flex-grow-1">Sautéed mushrooms and melted Swiss cheese.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$13.50</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Mushroom Swiss', 13.50, 'https://images.unsplash.com/photo-1605789538316-432243634845?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="appetizers"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Appetizer" onerror="this.onerror=null;this.src='https://placehold.co/400x400/f0ad4e/FFFFFF?text=Appetizer';"><div class="card-body d-flex flex-column"><h5 class="card-title">Onion Rings</h5><p class="card-text text-muted small flex-grow-1">Thick-cut, battered, and fried to golden perfection.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$6.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Onion Rings', 6.00, 'https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="desserts"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1610950645562-be9f36e95a28?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Dessert" onerror="this.onerror=null;this.src='https://placehold.co/400x400/6f42c1/FFFFFF?text=Dessert';"><div class="card-body d-flex flex-column"><h5 class="card-title">Tiramisu</h5><p class="card-text text-muted small flex-grow-1">Coffee-soaked ladyfingers and creamy mascarpone.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$8.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Tiramisu', 8.00, 'https://images.unsplash.com/photo-1610950645562-be9f36e95a28?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="drinks"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1525803377221-4f6cc3538644?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Drink" onerror="this.onerror=null;this.src='https://placehold.co/400x400/17a2b8/FFFFFF?text=Drink';"><div class="card-body d-flex flex-column"><h5 class="card-title">Mineral Water</h5><p class="card-text text-muted small flex-grow-1">Chilled sparkling or still mineral water.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$2.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Mineral Water', 2.00, 'https://images.unsplash.com/photo-1525803377221-4f6cc3538644?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="pizza"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1552539618-7eec9b4d1796?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Pizza" onerror="this.onerror=null;this.src='https://placehold.co/400x400/d9534f/FFFFFF?text=Pizza';"><div class="card-body d-flex flex-column"><h5 class="card-title">Four Cheese</h5><p class="card-text text-muted small flex-grow-1">A decadent blend of four premium cheeses.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$13.50</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Four Cheese', 13.50, 'https://images.unsplash.com/photo-1552539618-7eec9b4d1796?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="burgers"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1594212699903-ec8a3e759d74?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Burger" onerror="this.onerror=null;this.src='https://placehold.co/400x400/8B4513/FFFFFF?text=Burger';"><div class="card-body d-flex flex-column"><h5 class="card-title">Veggie Burger</h5><p class="card-text text-muted small flex-grow-1">A delicious plant-based patty with all the fixings.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$11.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Veggie Burger', 11.00, 'https://images.unsplash.com/photo-1594212699903-ec8a3e759d74?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="salads"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1505253716362-afb74b626351?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Salad" onerror="this.onerror=null;this.src='https://placehold.co/400x400/28a745/FFFFFF?text=Salad';"><div class="card-body d-flex flex-column"><h5 class="card-title">Cobb Salad</h5><p class="card-text text-muted small flex-grow-1">Grilled chicken, bacon, egg, and blue cheese.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$12.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Cobb Salad', 12.00, 'https://images.unsplash.com/photo-1505253716362-afb74b626351?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="appetizers"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1576777647209-e8735d79e435?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Appetizer" onerror="this.onerror=null;this.src='https://placehold.co/400x400/f0ad4e/FFFFFF?text=Appetizer';"><div class="card-body d-flex flex-column"><h5 class="card-title">Nachos</h5><p class="card-text text-muted small flex-grow-1">Loaded with cheese, jalapeños, salsa, and sour cream.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$10.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Nachos', 10.00, 'https://images.unsplash.com/photo-1576777647209-e8735d79e435?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="desserts"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1587314168485-3236d6710814?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Dessert" onerror="this.onerror=null;this.src='https://placehold.co/400x400/6f42c1/FFFFFF?text=Dessert';"><div class="card-body d-flex flex-column"><h5 class="card-title">Ice Cream Sundae</h5><p class="card-text text-muted small flex-grow-1">Two scoops of vanilla with chocolate sauce and a cherry.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$6.00</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Ice Cream Sundae', 6.00, 'https://images.unsplash.com/photo-1587314168485-3236d6710814?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+        <div class="col menu-item" data-category="drinks"><div class="menu-item-card h-100"><img src="https://images.unsplash.com/photo-1619552554322-a963283a00a1?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Drink" onerror="this.onerror=null;this.src='https://placehold.co/400x400/17a2b8/FFFFFF?text=Drink';"><div class="card-body d-flex flex-column"><h5 class="card-title">Orange Juice</h5><p class="card-text text-muted small flex-grow-1">Freshly squeezed, 100% natural orange juice.</p><div class="d-flex justify-content-between align-items-center mt-3"><p class="card-price mb-0">$3.50</p><button class="btn btn-add-cart" onclick="addToCart(this, 'Orange Juice', 3.50, 'https://images.unsplash.com/photo-1619552554322-a963283a00a1?q=80&w=100&auto=format&fit=crop')">Add to Cart</button></div></div></div></div>
+
+
+    </div>
+</main>
+
+<!-- Shopping Cart Offcanvas -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="shoppingCart" aria-labelledby="shoppingCartLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title fw-bold" id="shoppingCartLabel">Your Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column">
+        <div id="cartItems" class="flex-grow-1">
+            <div id="emptyCartMessage" class="empty-cart-message d-flex flex-column justify-content-center align-items-center h-100">
+                <i class="bi bi-cart3 fs-1"></i>
+                <p class="mt-2">Your cart is empty</p>
+            </div>
+        </div>
+        <div class="cart-footer mt-auto">
+            <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+                <span>Total:</span>
+                <span id="cartTotal">$0.00</span>
+            </div>
+            <button id="checkoutBtn" class="btn btn-success w-100 fw-bold" disabled>Proceed to Checkout</button>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container text-center">
+        <a class="navbar-brand fs-4 mb-3 d-block" href="#">
+            <i class="bi bi-egg-fried"></i> FoodieFiesta
+        </a>
+        <p>Connect with us on social media</p>
+        <div class="mb-3">
+            <a href="#" class="fs-4 me-3"><i class="bi bi-instagram"></i></a>
+            <a href="#" class="fs-4 me-3"><i class="bi bi-facebook"></i></a>
+            <a href="#" class="fs-4"><i class="bi bi-twitter-x"></i></a>
+        </div>
+        <p class="text-white-50 small">&copy; 2025 FoodieFiesta. All Rights Reserved. Crafted with <i class="bi bi-heart-fill"></i>.</p>
+    </div>
+</footer>
+
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const cart = [];
+
+    function findCartItem(name) {
+        return cart.find(item => item.name === name);
+    }
+
+    // --- CART LOGIC ---
+    function addToCart(button, name, price, image) {
+        const existingItem = findCartItem(name);
+
+        if (existingItem) {
+            existingItem.quantity++;
+        } else {
+            cart.push({ name, price, quantity: 1, image });
+        }
+
+        // UI feedback
+        button.classList.add('added');
+        button.innerHTML = 'Added! <i class="bi bi-check-lg"></i>';
+        setTimeout(() => {
+            button.classList.remove('added');
+            button.innerHTML = 'Add to Cart';
+        }, 1000);
+
+        renderCart();
+    }
+
+    function updateQuantity(name, change) {
+        const item = findCartItem(name);
+        if (item) {
+            item.quantity += change;
+            if (item.quantity <= 0) {
+                removeFromCart(name);
+            }
+        }
+        renderCart();
+    }
+
+    function removeFromCart(name) {
+        const itemIndex = cart.findIndex(item => item.name === name);
+        if (itemIndex > -1) {
+            cart.splice(itemIndex, 1);
+        }
+        renderCart();
+    }
+
+    // --- RENDER LOGIC (BUG FIX) ---
+    function renderCart() {
+        const cartItemsContainer = document.getElementById('cartItems');
+        cartItemsContainer.innerHTML = ''; // Clear everything
+
+        if (cart.length === 0) {
+            // If cart is empty, inject the empty message HTML
+            cartItemsContainer.innerHTML = `
+                    <div id="emptyCartMessage" class="empty-cart-message d-flex flex-column justify-content-center align-items-center h-100">
+                        <i class="bi bi-cart3 fs-1"></i>
+                        <p class="mt-2">Your cart is empty</p>
+                    </div>
+                `;
+        } else {
+            // If cart has items, loop through and build the item list
+            cart.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'cart-item';
+                itemElement.innerHTML = `
+                        <img src="${item.image}" class="cart-item-img" alt="${item.name}">
+                        <div class="cart-item-details">
+                            <p class="mb-0 fw-bold small">${item.name}</p>
+                            <p class="mb-0 text-muted small">$${item.price.toFixed(2)}</p>
+                        </div>
+                        <div class="quantity-controls d-flex align-items-center gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity('${item.name}', -1)">-</button>
+                            <span class="fw-bold">${item.quantity}</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity('${item.name}', 1)">+</button>
+                        </div>
+                    `;
+                cartItemsContainer.appendChild(itemElement);
+            });
+        }
+
+        updateCartTotal();
+        updateCartBadge();
+    }
+
+    function updateCartTotal() {
+        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        document.getElementById('cartTotal').textContent = `$${total.toFixed(2)}`;
+        document.getElementById('checkoutBtn').disabled = cart.length === 0;
+    }
+
+    function updateCartBadge() {
+        const badge = document.getElementById('cartBadge');
+        const totalItems = cart.length;
+        if (totalItems > 0) {
+            badge.textContent = totalItems;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    // --- FILTER AND SEARCH LOGIC ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const searchInput = document.getElementById('searchInput');
+        const menuItems = document.querySelectorAll('.menu-item');
+
+        // Category filtering
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelector('.filter-btn.active').classList.remove('active');
+                button.classList.add('active');
+                const filter = button.getAttribute('data-filter');
+                filterMenu(filter, searchInput.value.toLowerCase());
+            });
+        });
+
+        // Live search
+        searchInput.addEventListener('keyup', () => {
+            const activeFilter = document.querySelector('.filter-btn.active').getAttribute('data-filter');
+            filterMenu(activeFilter, searchInput.value.toLowerCase());
+        });
+
+        function filterMenu(category, searchTerm) {
+            menuItems.forEach(item => {
+                const itemCategory = item.getAttribute('data-category');
+                const itemName = item.querySelector('.card-title').textContent.toLowerCase();
+                const categoryMatch = category === 'all' || itemCategory === category;
+                const searchMatch = itemName.includes(searchTerm);
+
+                if (categoryMatch && searchMatch) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+    });
+
+    // Initial render
+    renderCart();
+
+</script>
+
+</body>
+</html>
